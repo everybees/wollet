@@ -72,10 +72,28 @@ class WalletViewSetTes(TestCase):
             "currency": "USD",
             "amount": 1000
         }
+        wallet_data_1 = {
+            "currency": "EUR",
+            "amount": 100
+        }
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.jane_token.key)
         response = self.client.post(reverse('wallet-create-wallet'), data=wallet_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        response = self.client.post(reverse('wallet-create-wallet'), data=wallet_data_1, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_elite_wallet_funding(self):
+        funding_data = {
+            "currency": "USD",
+            "amount": 200,
+            "wallet_id": self.jane_wallet.id
+        }
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.jane_token.key)
+        response = self.client.put(reverse('wallet-fund-wallet'), data=funding_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        transaction = Transaction.objects.get(wallet_id=self.jane_wallet.id)
+        self.assertEqual(transaction.amount == funding_data['amount'], True)
 
     def test_fund_wallet(self):
         funding_data = {
@@ -84,12 +102,26 @@ class WalletViewSetTes(TestCase):
             "wallet_id": self.johnnie_wallet.id
         }
 
+        elite_funding_data = {
+            "amount": 1000,
+            "currency": "USD",
+            "wallet_id": self.jane_wallet.id
+        }
+
         # with noob user
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.johnnie_token.key)
         response = self.client.put(reverse('wallet-fund-wallet'), data=funding_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         user = self.johnnie
         transaction = Transaction.objects.filter(wallet__owner=user)
+        self.assertEqual(transaction.exists(), True)
+
+        # with elite user
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.jane_token.key)
+        response = self.client.put(reverse('wallet-fund-wallet'), data=elite_funding_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user = self.jane
+        transaction = Transaction.objects.filter(wallet=self.jane_wallet)
         self.assertEqual(transaction.exists(), True)
 
     def test_withraw_from_wallet(self):

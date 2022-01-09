@@ -57,9 +57,12 @@ class WalletViewSet(viewsets.ViewSet):
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
             if user_type != "admin":
+                wallet = Wallet.objects.get(id=wallet_id)
                 if user_type == 'noob':
-                    wallet = Wallet.objects.get(id=wallet_id)
                     helpers.convert_to_main_currency(amount, currency, wallet, 'funding')
+                else:
+                    wallet.balance = wallet.balance + amount
+                    wallet.save()
             else:
                 helpers.perform_funding(amount, currency, wallet_id)
                 return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
@@ -80,16 +83,31 @@ class WalletViewSet(viewsets.ViewSet):
             user_type = token.user.user_type
             if user_type != 'admin':
                 wallet = Wallet.objects.get(id=wallet_id)
-                helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
+                if user_type == "noob":
+                    helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
+                elif wallet.balance < amount:
+                    helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawl')
+                else:
+                    Transaction.objects.create(wallet=wallet, amount=amount, transaction_type='withdrawal')
             return Response({"message": "Wallet will be debited as soon as an admin approves."}, status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
             return Response({"message": "This wallet does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['put'], permission_classes=[IsAdmin])
-    def change_wallet_currency(self, request):
-        ...
+    def change_main_currency(self, request):
+        try:
+            wallet_id = request.data.get('wallet_id')
+            currency = request.data.get('currency')
+            main_wallet = Wallet.objects.get(id=wallet_id, main_wallet=True)
+            main_wallet.balance = helpers.convert_balance(currency, main_currency, main_wallet.balance)
+            main_wallet.currency = currency
+            main_wallet.save()
+        except Wallet.DoesNotExist:
+            return Response({"message": "This wallet does not exist or is not a main wallet"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransactionViewSet(viewsets.ViewSet):

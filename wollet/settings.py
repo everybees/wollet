@@ -101,20 +101,20 @@ WSGI_APPLICATION = 'wollet.wsgi.application'
 AUTH_USER_MODEL = 'api.User'
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': env('DB_NAME'),
-#         'USER': env('DB_USER'),
-#         'PASSWORD': env('DB_PASSWORD'),
-#         'HOST': '127.0.0.1',
-#         'PORT': '5432',
-#     }
-# }
-
 DATABASES = {
-    'default': env('DATABASE_URL', cast=dj_database_url.parse),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
 }
+
+# DATABASES = {
+#     'default': env('DATABASE_URL', cast=dj_database_url.parse),
+# }
 
 
 # Password validation
