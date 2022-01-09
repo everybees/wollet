@@ -1,37 +1,23 @@
-## READ ME
+# Wollet
+A Wallet App
 
-use python
-use REST
-sqlite3
+## Link to API Documentation
+[Api Documentation](https://documenter.getpostman.com/view/11059495/UVXesdbK "API DOcumentation")
 
-use authentication rest_toke_auth
+## Link to Hosted Application
+[Link to Hosted Application](https://wollet.herokuapp.com/ "Heroku")
 
-user_types:
-- noob
-- elite
-- admin
+## Seeded Admin User Information
+   * Admin 1 - "username": "admin1", "password": "mypassword"
+   * Admin 2 - "username": "admin2", "password": "mypassword"
 
-models:
-- user
-- wallet
+### Technologies
+##### The Following technolgies were used while building
+    * Language - Python
+    * Framework - Django, Django REST Framework
+    * Database - Postgres
+    * Hosting - Heroku
+    * Communication Protocol - REST
 
-endpoints:
-- signup
-- login
-- fund wallet in different currency:
-    - approve funding
-- withdraw funds
+## Setup
 
-- create wallet
-- fund wallet:
-    - create wallet in currency
-- withdraw funds:
-    - if elite - withdraw funds from currency wallet
-    - if no funds, check main account and withdraw
-- cannot change main currency
-
-admin:
-- fund wallet for users
-- chnage main currency of user
-- approve wallet funding for noob
-- promote or demote users

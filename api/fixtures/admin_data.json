@@ -1,0 +1,20 @@
+[
+    {
+      "model": "api.user",
+      "fields": {
+        "username": "admin1",
+        "user_type": "admin",
+        "email": "admin1@email.com",
+        "password": "mypassword"
+      }
+    },
+    {
+      "model": "api.user",
+      "fields": {
+        "username": "admin2",
+        "user_type": "admin",
+        "email": "admin2@email.com",
+        "password": "mypassword"
+      }
+    }
+  ]

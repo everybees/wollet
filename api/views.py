@@ -24,7 +24,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
-            Wallet.objects.create(owner=user, currency=data['currency'], main_wallet=True)
+            if data.get('user_type') != "admin":
+                Wallet.objects.create(owner=user, currency=data['currency'], main_wallet=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
