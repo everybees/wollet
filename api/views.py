@@ -15,7 +15,8 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (ActionBasedPermission,)
     action_permissions = {
         AllowAny: ['create'],
-        IsAuthenticated: ['retrieve', 'list']
+        IsAuthenticated: ['retrieve', 'list'],
+        IsAdmin: ['update']
     }
 
     def create(self, request, *args, **kwargs):
@@ -100,7 +101,7 @@ class WalletViewSet(viewsets.ViewSet):
         try:
             wallet_id = request.data.get('wallet_id')
             currency = request.data.get('currency')
-            main_wallet = Wallet.objects.get(id=wallet_id, main_wallet=True)
+            main_wallet = Wallet.objects.get(id=wallet_id, main_wallet=True, owner__user_type='noob')
             main_wallet.balance = helpers.convert_balance(currency, main_wallet.currency, main_wallet.balance)
             main_wallet.currency = currency
             main_wallet.save()
