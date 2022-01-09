@@ -20,6 +20,7 @@ class User(AbstractUser):
 
 class Wallet(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    main_wallet = models.BooleanField(default=False)
     currency = models.CharField(max_length=5)
     balance = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     date_created = models.DateTimeField(auto_now_add=True)
