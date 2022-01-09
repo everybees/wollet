@@ -101,7 +101,7 @@ class WalletViewSet(viewsets.ViewSet):
             wallet_id = request.data.get('wallet_id')
             currency = request.data.get('currency')
             main_wallet = Wallet.objects.get(id=wallet_id, main_wallet=True)
-            main_wallet.balance = helpers.convert_balance(currency, main_currency, main_wallet.balance)
+            main_wallet.balance = helpers.convert_balance(currency, main_wallet.currency, main_wallet.balance)
             main_wallet.currency = currency
             main_wallet.save()
         except Wallet.DoesNotExist:
