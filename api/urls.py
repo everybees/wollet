@@ -10,6 +10,7 @@ router = routers.DefaultRouter(trailing_slash=False)
 
 router.register('users', av.UserViewSet, 'users')
 router.register('wallets', av.WalletViewSet, 'wallet')
+router.register('transactions', av.TransactionViewSet, 'transactions')
 
 
 urlpatterns = [

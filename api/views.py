@@ -51,7 +51,7 @@ class WalletViewSet(viewsets.ViewSet):
     def fund_wallet(self, request):
         data = request.data
         amount = data.get('amount', 0)
-        currency = data.get('currnecy', "NGN")
+        currency = data.get('currency', "NGN")
         wallet_id = data.get('wallet_id', None)
         try:
             token = Token.objects.get(key=request.auth.key)
@@ -72,8 +72,8 @@ class WalletViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['put'], permission_classes=[IsAuthenticated])
     def withdraw(self, request):
         data = request.data
-        amount = data.get('amount', 0),
-        currency = data.get('currnecy', "NGN")
+        amount = data.get('amount', 0)
+        currency = data.get('currency', "NGN")
         wallet_id = data.get('wallet_id', None)
         try:
             token = Token.objects.get(key=request.auth.key)
@@ -82,11 +82,17 @@ class WalletViewSet(viewsets.ViewSet):
                 wallet = Wallet.objects.get(id=wallet_id)
                 helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
             return Response({"message": "Wallet will be debited as soon as an admin approves."}, status=status.HTTP_200_OK)
+        except Wallet.DoesNotExist:
+            return Response({"message": "This wallet does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['put'], permission_classes=[IsAdmin])
+    def change_wallet_currency(self, request):
+        ...
 
-class TransactionViewSet(viewsets.ModelViewSet):
+
+class TransactionViewSet(viewsets.ViewSet):
     queryset = Transaction.objects.all()
 
     @action(detail=False, permission_classes=[IsAdmin])
@@ -96,7 +102,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['put'], permission_classes=[IsAdmin])
     def approve_withdrawal(self, request):
         try:
-            ...
+            transaction_id = request.data.get('transaction_id')
+            transaction = Transaction.objects.get(id=transaction_id)
+            wallet = transaction.wallet
+            wallet.balance = transaction.amount + wallet.balance
+            transaction.is_approved = True
+            wallet.save()
+            transaction.save()
+            return Response({"message": "Transaction approved successfully"}, status=status.HTTP_200_OK)
+        except Transaction.DoesNotExist:
+            return Response({"message": "This transaction does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
