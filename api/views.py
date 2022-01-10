@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 import helpers
 from api.models import Transaction, User, Wallet
-from api.serializers import UserSerializer, WalletSerializer
+from api.serializers import UserSerializer, WalletSerializer, TransactionSerializer
 from permissions import ActionBasedPermission, IsAdmin, IsElite
 
 
@@ -118,7 +118,12 @@ class TransactionViewSet(viewsets.ViewSet):
 
     @action(detail=False, permission_classes=[IsAdmin])
     def transaction_requests(self, request):
-        ...
+        try:
+            transactions = Transaction.objects.all()
+            serializer = TransactionSerializer(transactions, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['put'], permission_classes=[IsAdmin])
     def approve_withdrawal(self, request):
