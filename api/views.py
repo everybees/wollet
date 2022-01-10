@@ -49,6 +49,16 @@ class WalletViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, permission_classes=[IsAuthenticated])
+    def view_wallets(self, request):
+        try:
+            token = Token.objects.get(key=request.auth.key)
+            wallets = Wallet.objects.filter(owner=token.user)
+            serializer = WalletSerializer(wallets, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['put'], permission_classes=[IsAuthenticated])
     def fund_wallet(self, request):
         data = request.data
