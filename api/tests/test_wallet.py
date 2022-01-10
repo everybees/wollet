@@ -1,11 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from api.models import Transaction, User, Wallet
-from api.serializers import WalletSerializer
 
 
 class WalletViewSetTes(TestCase):
@@ -124,7 +123,7 @@ class WalletViewSetTes(TestCase):
         transaction = Transaction.objects.filter(wallet=self.jane_wallet)
         self.assertEqual(transaction.exists(), True)
 
-    def test_withraw_from_wallet(self):
+    def test_withdraw_from_wallet(self):
         funding_data = {
             "amount": 1000,
             "currency": "USD",

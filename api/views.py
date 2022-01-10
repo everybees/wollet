@@ -1,12 +1,13 @@
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+import helpers
 from api.models import Transaction, User, Wallet
 from api.serializers import UserSerializer, WalletSerializer
 from permissions import ActionBasedPermission, IsAdmin, IsElite
-from rest_framework.permissions import AllowAny, IsAuthenticated
-import helpers
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -67,7 +68,8 @@ class WalletViewSet(viewsets.ViewSet):
             else:
                 helpers.perform_funding(amount, currency, wallet_id)
                 return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
-            return Response({"message": "Wallet will be funded as soon as an admin approves."}, status=status.HTTP_200_OK)
+            return Response({"message": "Wallet will be funded as soon as an admin approves."},
+                            status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
             return Response({"message": "This wallet does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -84,13 +86,12 @@ class WalletViewSet(viewsets.ViewSet):
             user_type = token.user.user_type
             if user_type != 'admin':
                 wallet = Wallet.objects.get(id=wallet_id)
-                if user_type == "noob":
+                if user_type == "noob" or wallet.balance < amount:
                     helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
-                elif wallet.balance < amount:
-                    helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawl')
                 else:
                     Transaction.objects.create(wallet=wallet, amount=amount, transaction_type='withdrawal')
-            return Response({"message": "Wallet will be debited as soon as an admin approves."}, status=status.HTTP_200_OK)
+            return Response({"message": "Wallet will be debited as soon as an admin approves."},
+                            status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
             return Response({"message": "This wallet does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -106,7 +107,8 @@ class WalletViewSet(viewsets.ViewSet):
             main_wallet.currency = currency
             main_wallet.save()
         except Wallet.DoesNotExist:
-            return Response({"message": "This wallet does not exist or is not a main wallet"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "This wallet does not exist or is not a main wallet"},
+                            status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

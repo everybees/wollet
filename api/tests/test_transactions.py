@@ -1,11 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from api.models import Transaction, User, Wallet
-from api.serializers import WalletSerializer
 
 
 class TransactionViewSetTes(TestCase):
@@ -28,7 +27,6 @@ class TransactionViewSetTes(TestCase):
         self.transaction = Transaction.objects.create(
             wallet=self.johnnie_wallet, amount=2000.0, is_approved=False
             )
-    
 
     def test_noob_tries_to_approve_transaction(self):
         transaction_data = {
