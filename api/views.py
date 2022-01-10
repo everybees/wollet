@@ -63,25 +63,27 @@ class WalletViewSet(viewsets.ViewSet):
     def fund_wallet(self, request):
         data = request.data
         amount = data.get('amount', 0)
-        currency = data.get('currency', "NGN")
-        wallet_id = data.get('wallet_id', None)
+        currency = data.get('currency')
+        user_id = data.get('user_id')
         try:
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
             if user_type != "admin":
-                wallet = Wallet.objects.get(id=wallet_id)
                 if user_type == 'noob':
+                    wallet = Wallet.objects.get(owner=token.user)
                     helpers.convert_to_main_currency(amount, currency, wallet, 'funding')
                 else:
+                    wallet = Wallet.objects.get(currency=currency, owner=token.user)
                     wallet.balance = wallet.balance + amount
                     wallet.save()
             else:
-                helpers.perform_funding(amount, currency, wallet_id)
+                wallet = Wallet.objects.get(currency=currency, owner_id=user_id)
+                helpers.perform_funding(amount, wallet)
                 return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
             return Response({"message": "Wallet will be funded as soon as an admin approves."},
                             status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
-            return Response({"message": "This wallet does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "This wallet does not exist or is not yours"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
