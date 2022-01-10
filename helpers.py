@@ -19,20 +19,14 @@ def perform_withdrawal(amount, currency, wallet_id):
     ...
 
 
-def convert_to_main_currency(amount, currency, wallet, transaction_type):
+def convert_to_main_currency(amount, currency, wallet):
     try:
         # response = requests.post(f"{FIXER_URL}/latest?access_key={FIXER_API_KEY}")
         # data = response.json().get('rates')
         data = rates
         euro_to_currency = data[currency]
         euro_to_wallet_currency = data[wallet.currency]
-        amount_conversion = round((euro_to_wallet_currency / euro_to_currency) * amount, 2)
-        return Transaction.objects.create(
-            wallet=wallet,
-            amount=amount_conversion,
-            transaction_type=transaction_type,
-        )
-
+        return round((euro_to_wallet_currency / euro_to_currency) * amount, 2)
     except Exception as e:
         return str(e)
 

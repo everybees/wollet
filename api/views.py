@@ -71,11 +71,15 @@ class WalletViewSet(viewsets.ViewSet):
             if user_type != "admin":
                 if user_type == 'noob':
                     wallet = Wallet.objects.get(owner=token.user)
-                    helpers.convert_to_main_currency(amount, currency, wallet, 'funding')
+                    amount_conversion = helpers.convert_to_main_currency(amount, currency, wallet)
+                    Transaction.objects.create(
+                        wallet=wallet, amount=amount_conversion, transaction_type='funding'
+                    )
                 else:
                     wallet = Wallet.objects.get(currency=currency, owner=token.user)
                     wallet.balance = wallet.balance + amount
                     wallet.save()
+                    return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
             else:
                 wallet = Wallet.objects.get(currency=currency, id=wallet_id)
                 helpers.perform_funding(amount, wallet)
@@ -92,16 +96,32 @@ class WalletViewSet(viewsets.ViewSet):
         data = request.data
         amount = data.get('amount', 0)
         currency = data.get('currency')
-        user_id = data.get('user_id')
+        wallet_id = data.get('wallet_id')
         try:
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
             if user_type != 'admin':
-                wallet = Wallet.objects.get(owner=token.user, currency=currency)
-                if user_type == "noob" or wallet.balance < amount:
-                    helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
-                else:
+                wallet = Wallet.objects.get(owner=token.user, id=wallet_id)
+                if user_type == "noob":
+                    amount_conversion = helpers.convert_to_main_currency(amount, currency, wallet)
+                    if wallet.balance < amount_conversion:
+                        return Response({"message": "Balance below withdraw-able amount."},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        Transaction.objects.create(
+                            wallet=wallet, amount=amount_conversion, transaction_type='withdrawal'
+                        )
+                elif wallet.balance >= amount:
                     Transaction.objects.create(wallet=wallet, amount=amount, transaction_type='withdrawal')
+                else:
+                    amount_conversion = helpers.convert_balance(amount, currency, wallet)
+                    if amount_conversion < amount_conversion:
+                        return Response({"message": "Balance below withdraw-able amount."},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        Transaction.objects.create(
+                            wallet=wallet, amount=amount_conversion, transaction_type='withdrawal'
+                        )
             return Response({"message": "Wallet will be debited as soon as an admin approves."},
                             status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:

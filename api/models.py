@@ -21,7 +21,7 @@ class Wallet(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     main_wallet = models.BooleanField(default=False)
     currency = models.CharField(max_length=5)
-    balance = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=20, decimal_places=2, default=0, editable=False)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
@@ -36,7 +36,7 @@ TRANSACTION_TYPE = (
 
 class Transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, null=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
     transaction_type = models.CharField(max_length=12, choices=TRANSACTION_TYPE, default='funding')
     is_approved = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
