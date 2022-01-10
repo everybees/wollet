@@ -64,7 +64,7 @@ class WalletViewSet(viewsets.ViewSet):
         data = request.data
         amount = data.get('amount', 0)
         currency = data.get('currency')
-        user_id = data.get('user_id')
+        wallet_id = data.get('wallet_id')
         try:
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
@@ -77,7 +77,7 @@ class WalletViewSet(viewsets.ViewSet):
                     wallet.balance = wallet.balance + amount
                     wallet.save()
             else:
-                wallet = Wallet.objects.get(currency=currency, owner_id=user_id)
+                wallet = Wallet.objects.get(currency=currency, id=wallet_id)
                 helpers.perform_funding(amount, wallet)
                 return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
             return Response({"message": "Wallet will be funded as soon as an admin approves."},
@@ -91,13 +91,13 @@ class WalletViewSet(viewsets.ViewSet):
     def withdraw(self, request):
         data = request.data
         amount = data.get('amount', 0)
-        currency = data.get('currency', "NGN")
-        wallet_id = data.get('wallet_id', None)
+        currency = data.get('currency')
+        user_id = data.get('user_id')
         try:
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
             if user_type != 'admin':
-                wallet = Wallet.objects.get(id=wallet_id)
+                wallet = Wallet.objects.get(owner=token.user, currency=currency)
                 if user_type == "noob" or wallet.balance < amount:
                     helpers.convert_to_main_currency(amount, currency, wallet, 'withdrawal')
                 else:
