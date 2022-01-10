@@ -17,7 +17,6 @@ class UserViewSet(viewsets.ModelViewSet):
     action_permissions = {
         AllowAny: ['create'],
         IsAuthenticated: ['retrieve', 'list'],
-        IsAdmin: ['update']
     }
 
     def create(self, request, *args, **kwargs):
@@ -29,6 +28,22 @@ class UserViewSet(viewsets.ModelViewSet):
             if data.get('user_type') != "admin":
                 Wallet.objects.create(owner=user, currency=data['currency'], main_wallet=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['put'], permission_classes=[IsAdmin])
+    def change_user_type(self, request):
+        try:
+            user_id = request.data.get('user_id')
+            user_type = request.data.get('user_type')
+            user = User.objects.get(id=user_id)
+            if user.user_type not in ["noob", "elite"]:
+                return Response({"message": "Uer is neither a noob nor an elite"}, status=status.HTTP_400_BAD_REQUEST)
+            user.user_type = user_type
+            user.save()
+            return Response({"message": "Action performed successfully."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"message": "This user does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
