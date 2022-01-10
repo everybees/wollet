@@ -114,13 +114,14 @@ class WalletViewSet(viewsets.ViewSet):
                 elif wallet.balance >= amount:
                     Transaction.objects.create(wallet=wallet, amount=amount, transaction_type='withdrawal')
                 else:
-                    amount_conversion = helpers.convert_balance(amount, currency, wallet)
-                    if amount_conversion < amount_conversion:
+                    amount_conversion = helpers.convert_to_main_currency(amount, currency, wallet)
+                    main_wallet = Wallet.objects.get(owner=token.user, main_wallet=True)
+                    if main_wallet.balance < amount_conversion:
                         return Response({"message": "Balance below withdraw-able amount."},
                                         status=status.HTTP_400_BAD_REQUEST)
                     else:
                         Transaction.objects.create(
-                            wallet=wallet, amount=amount_conversion, transaction_type='withdrawal'
+                            wallet=main_wallet, amount=amount_conversion, transaction_type='withdrawal'
                         )
             return Response({"message": "Wallet will be debited as soon as an admin approves."},
                             status=status.HTTP_200_OK)
