@@ -38,6 +38,6 @@ def convert_balance(currency, main_currency, balance):
         data = rates
         euro_to_currency = data[currency]
         euro_to_wallet_currency = data[main_currency]
-        return round((euro_to_currency / euro_to_wallet_currency) * balance, 2)
+        return round((euro_to_currency / euro_to_wallet_currency) * float(balance), 2)
     except Exception as e:
         return str(e)
