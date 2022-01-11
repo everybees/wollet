@@ -154,6 +154,7 @@ class WalletViewSet(viewsets.ViewSet):
             main_wallet.balance = helpers.convert_balance(currency, main_wallet.currency, main_wallet.balance)
             main_wallet.currency = currency
             main_wallet.save()
+            return Response({"message": "This main wallet has been updated."}, status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
             return Response({"message": "This wallet does not exist or is not a main wallet"},
                             status=status.HTTP_404_NOT_FOUND)

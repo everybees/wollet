@@ -6,10 +6,10 @@ services:
     volumes:
       - ./data/db:/var/lib/postgresql/data
   web:
-    build: .
+    build: ./
     command: python manage.py runserver 0.0.0.:8000
     volumes:
-      - ./wollet/:/usr/src/app/
+      - ./app/:/usr/src/app/
     ports:
       - "8000:8000"
     environment:
