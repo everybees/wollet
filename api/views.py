@@ -1,3 +1,4 @@
+from django.db.models import F
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -79,7 +80,7 @@ class WalletViewSet(viewsets.ViewSet):
         data = request.data
         amount = data.get('amount', 0)
         currency = data.get('currency')
-        wallet_id = data.get('wallet_id')
+        transaction_id = data.get('transaction_id')
         try:
             token = Token.objects.get(key=request.auth.key)
             user_type = token.user.user_type
@@ -92,13 +93,17 @@ class WalletViewSet(viewsets.ViewSet):
                     )
                 else:
                     wallet = Wallet.objects.get(currency=currency, owner=token.user)
-                    wallet.balance = wallet.balance + amount
+                    wallet.balance = F("balance") + amount
                     wallet.save()
+                    wallet.refresh_from_db()
                     return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
             else:
-                wallet = Wallet.objects.get(currency=currency, id=wallet_id)
-                helpers.perform_funding(amount, wallet)
-                return Response({"message": "Wallet funded successfully"}, status=status.HTTP_200_OK)
+                transaction = Transaction.objects.get(id=transaction_id)
+                if transaction.transaction_type != "funding":
+                    return Response({"message": "Cannot perform a withdrawal on funding request."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                helpers.perform_funding(transaction.amount, transaction.wallet)
+                return Response({"message": f"Wallet funded successfully"}, status=status.HTTP_200_OK)
             return Response({"message": "Wallet will be funded as soon as an admin approves."},
                             status=status.HTTP_200_OK)
         except Wallet.DoesNotExist:
@@ -179,8 +184,11 @@ class TransactionViewSet(viewsets.ViewSet):
         try:
             transaction_id = request.data.get('transaction_id')
             transaction = Transaction.objects.get(id=transaction_id)
+            if transaction.transaction_type != 'withdrawal':
+                return Response({"message": "Cannot perform funding for a withdrawal transaction."},
+                                status=status.HTTP_400_BAD_REQUEST)
             wallet = transaction.wallet
-            wallet.balance = transaction.amount + wallet.balance
+            wallet.balance = F("balance") - transaction.amount
             transaction.is_approved = True
             wallet.save()
             transaction.save()

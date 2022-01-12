@@ -1,4 +1,4 @@
-from api.models import Transaction, Wallet
+from django.db.models import F
 
 
 FIXER_URL = "http://data.fixer.io/api"
@@ -9,8 +9,9 @@ rates = {'AED': 4.169884, 'AFN': 118.644008, 'ALL': 121.412235, 'AMD': 546.49996
 
 def perform_funding(amount, wallet):
     try:
-        wallet.balance = wallet.balance + amount
+        wallet.balance = F("balance") + amount
         wallet.save()
+        wallet.refresh_from_db()
     except Exception as e:
         return str(e)
 
